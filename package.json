@@ -9,7 +9,7 @@
   ],
   "author": "Rasmus Porsager <rasmus@porsager.com>",
   "license": "WTFPL",
-  "dependencies": {
+  "devDependencies": {
     "fantestic": "0.0.1"
   }
 }
