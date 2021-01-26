@@ -1,0 +1,15 @@
+{
+  "name": "recur",
+  "version": "0.0.0",
+  "description": "",
+  "type": "module",
+  "main": "src/index.js",
+  "files": [
+    "src"
+  ],
+  "author": "Rasmus Porsager <rasmus@porsager.com>",
+  "license": "WTFPL",
+  "dependencies": {
+    "fantestic": "0.0.1"
+  }
+}
