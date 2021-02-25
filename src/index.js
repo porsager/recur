@@ -84,34 +84,34 @@ export default function Recur(input) {
       set until(v) { r.until = isDate('UNTIL', v) },
 
       get bysecond() { return r.bysecond },
-      set bysecond(v) { r.bysecond = v.map(x => isBetween('BYSECOND', v, [0, 60])) },
+      set bysecond(v) { r.bysecond = v.map(x => isBetween('BYSECOND', x, [0, 60])) },
 
       get byminute() { return r.byminute },
-      set byminute(v) { r.byminute = v.map(x => isBetween('BYMINUTE', v, [0, 59])) },
+      set byminute(v) { r.byminute = v.map(x => isBetween('BYMINUTE', x, [0, 59])) },
 
       get byhour() { return r.byhour },
-      set byhour(v) { r.byhour = v.map(x => isBetween('BYHOUR', v, [0, 23])) },
+      set byhour(v) { r.byhour = v.map(x => isBetween('BYHOUR', x, [0, 23])) },
 
       get byday() { return r.byday },
       set byday(v) { r.byday = v.map(x => isIn(t.daysMap, 'BYDAY', ('' + x).slice(-2)), x) },
 
       get bymonthday() { return r.bymonthday },
-      set bymonthday(v) { r.bymonthday = v.map(x => isBetween('BYHOUR', v, [-31, -1], [1, 31])) },
+      set bymonthday(v) { r.bymonthday = v.map(x => isBetween('BYHOUR', x, [-31, -1], [1, 31])) },
 
       get byyearday() { return r.byyearday },
-      set byyearday(v) { r.byyearday = v.map(x => isBetween('BYHOUR', v, [-366, -1], [1, 366])) },
+      set byyearday(v) { r.byyearday = v.map(x => isBetween('BYHOUR', x, [-366, -1], [1, 366])) },
 
       get byweekno() { return r.byweekno },
-      set byweekno(v) { r.byweekno = v.map(x => isBetween('BYWEEKNO', v, [-53, -1], [1, 53])) },
+      set byweekno(v) { r.byweekno = v.map(x => isBetween('BYWEEKNO', x, [-53, -1], [1, 53])) },
 
       get bymonth() { return r.bymonth },
-      set bymonth(v) { r.bymonth = v.map(x => isBetween('BYMONTH', v, [1, 12])) },
+      set bymonth(v) { r.bymonth = v.map(x => isBetween('BYMONTH', x, [1, 12])) },
 
       get wkst() { return r.wkst },
       set wkst(v) { r.wkst = isIn(t.daysMap, 'BYSETPOS', v) },
 
       get bysetpos() { return r.bysetpos },
-      set bysetpos(v) { r.bysetpos = v.map(x => isBetween('BYSETPOS', v, [-366, -1], [1, 366])) }
+      set bysetpos(v) { r.bysetpos = v.map(x => isBetween('BYSETPOS', x, [-366, -1], [1, 366])) }
     }
   }
 
