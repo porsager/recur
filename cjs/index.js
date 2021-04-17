@@ -29,7 +29,7 @@ function isIn(xs, key, value) {
 }
 
 function isDate(key, value) {
-  if (value != null && value instanceof Date === false)
+  if (value != null && (value instanceof Date === false || isNaN(value.getTime())))
     throw new Error(key + ': ' + value + ' is invalid - must be an instance of Date')
 
   return value
