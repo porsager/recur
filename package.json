@@ -9,6 +9,7 @@
     "import": "./src/index.js",
     "default": "./cjs/index.js"
   },
+  "repository": "porsager/recur",
   "scripts": {
     "build": "node build.cjs",
     "prepublishOnly": "npm run build"
