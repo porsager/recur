@@ -21,6 +21,6 @@
   "author": "Rasmus Porsager <rasmus@porsager.com>",
   "license": "WTFPL",
   "devDependencies": {
-    "fantestic": "0.0.1"
+    "fantestic": "0.0.3"
   }
 }

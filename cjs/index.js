@@ -209,7 +209,7 @@ module.exports = Recur;function Recur(input) {
     }
 
     const wkst = r.wkst || 'MO'
-        , dayMap    = t.daysMap[wkst]
+        , dayMap = t.daysMap[wkst]
 
     const dtstart = t.localToUTC(x.dtstart)
         , dtend = x.dtend && t.localToUTC(x.dtstart)
@@ -218,15 +218,15 @@ module.exports = Recur;function Recur(input) {
         , freq = freqs[r.freq]
         , interval = r.interval || 1
         , until = r.until && t.localToUTC(r.until).getTime()
-        , bysecond = r.bysecond ? r.bysecond.slice() : [dtstart.getSeconds()]
-        , byminute = r.byminute ? r.byminute.slice() : [dtstart.getMinutes()]
-        , byhour = r.byhour ? r.byhour.slice() : [dtstart.getHours()]
-        , byday = r.byday ? r.byday.slice() : [dayMap[dtstart.getDay()]]
-        , bymonthday = r.bymonthday ? r.bymonthday.slice() : [dtstart.getDate()]
-        , byyearday = r.byyearday ? r.byyearday.slice() : [t.yearDay(dtstart)]
-        , byweekno = r.byweekno ? r.byweekno.slice() : [t.weekNumber(dtstart)]
-        , bymonth = r.bymonth ? r.bymonth.slice() : []
-        , bysetpos = r.bysetpos ? r.bysetpos.slice() : []
+        , bysecond = r.bysecond ? r.bysecond : [dtstart.getSeconds()]
+        , byminute = r.byminute ? r.byminute : [dtstart.getMinutes()]
+        , byhour = r.byhour ? r.byhour : [dtstart.getHours()]
+        , byday = r.byday ? r.byday : [dayMap[dtstart.getDay()]]
+        , bymonthday = r.bymonthday ? r.bymonthday : [dtstart.getDate()]
+        , byyearday = r.byyearday ? r.byyearday : [t.yearDay(dtstart)]
+        , byweekno = r.byweekno ? r.byweekno : [t.weekNumber(dtstart)]
+        , bymonth = r.bymonth ? r.bymonth : []
+        , bysetpos = r.bysetpos ? r.bysetpos : []
         , count = r.count
 
     let rest = count
@@ -242,8 +242,6 @@ module.exports = Recur;function Recur(input) {
     let value
       , done
 
-    global.i = 0
-
     return {
       next: () => done || next()
     }
@@ -258,8 +256,8 @@ module.exports = Recur;function Recur(input) {
         while (x.value && x.value.getTime() < start.getTime()) {
           x = done || (
             count && rest-- === 0
-            ? (done = { done: true })
-            : get()
+              ? (done = { done: true })
+              : get()
           )
         }
       }

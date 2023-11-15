@@ -1,8 +1,9 @@
-import { t, o } from 'fantestic'
+import t from 'fantestic'
 import time from '../src/time.js'
 import recur from '../src/index.js'
 
-
+const { ot, nt } = t
+/*
 const v = recur(`DTSTART:20210119T090000
 EXDATE:20210124T090000
 RRULE:FREQ=WEEKLY;INTERVAL=2;BYDAY=SU,MO;WKST=MO
@@ -14,7 +15,7 @@ let start = Date.now()
 const xs = v.between(from, to)
 p(Date.now() - start)
 p(xs[0], xs[xs.length - 1], xs.length)
-
+*/
 
 t('iterator works', () => {
   const v = recur(
@@ -88,6 +89,22 @@ t('contain works', () => {
 
   return [
     v.contains(new Date(2021, 0, 27, 9, 29, 59, 999)),
+    true
+  ]
+})
+
+t('contain works with multiple', () => {
+  const v = recur({
+    dtstart: new Date('2023-01-02T13:00'),
+    dtend: new Date('2023-01-02T17:00'),
+    rrule: {
+      freq: 'WEEKLY',
+      byday: ['SA', 'SU']
+    }
+  })
+
+  return [
+    v.contains(new Date('2023-01-07T14:00')),
     true
   ]
 })
