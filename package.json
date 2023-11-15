@@ -5,6 +5,9 @@
   "type": "module",
   "module": "./src/index.js",
   "main": "./cjs/index.js",
+  "engines": {
+    "node": ">= 5.0"
+  },
   "exports": {
     "import": "./src/index.js",
     "default": "./cjs/index.js"
