@@ -73,15 +73,9 @@ t.parse = x => x.split(/[Z+]/)[0]
     )
   )
 
-t.UTCToLocal = x => new Date(
-  x.getUTCFullYear(), x.getUTCMonth(), x.getUTCDate(),
-  x.getUTCHours(), x.getUTCMinutes(), x.getUTCSeconds(), x.getUTCMilliseconds()
-)
+t.UTCToLocal = x => new Date(x.getTime() + (x.getTimezoneOffset() * 60000))
 
-t.localToUTC = x => new Date(Date.UTC(
-  x.getFullYear(), x.getMonth(), x.getDate(),
-  x.getHours(), x.getMinutes(), x.getSeconds(), x.getMilliseconds()
-))
+t.localToUTC = x => new Date(x.getTime() - (x.getTimezoneOffset() * 60000))
 
 t.zonelessToUTC = x => new Date(Date.UTC(...t.parse(x)))
 t.zonelessToLocal = x => new Date(...t.parse(x))
