@@ -120,7 +120,7 @@ module.exports = Recur;function Recur(input) {
   )
 
   Object.entries(r).forEach(([k, v]) =>
-    recur.rrule[k] = v
+    v == null || (recur.rrule[k] = v)
   )
 
   Object.defineProperties(recur, {
