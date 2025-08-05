@@ -205,7 +205,8 @@ export default function Recur(input) {
       MINUTELY  : secondly(t.m),
       HOURLY    : secondly(t.h),
       DAILY     : secondly(t.d),
-      WEEKLY
+      WEEKLY,
+      MONTHLY
     }
 
     const wkst = r.wkst || 'MO'
@@ -289,6 +290,19 @@ export default function Recur(input) {
         -day * t.d + t.w * interval + firstDay
       ))
 
+      return date
+    }
+
+    function MONTHLY(date) {
+      const y = date.getUTCFullYear()
+      const m = date.getUTCMonth()
+      const d = date.getUTCDate()
+      const h = date.getUTCHours()
+      const mm = date.getUTCMinutes()
+      const s = date.getUTCSeconds()
+      const ms = date.getUTCMilliseconds()
+
+      date = new  Date(Date.UTC(y, m + interval, d, h, mm, s, ms))
       return date
     }
   }

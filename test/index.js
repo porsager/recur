@@ -126,3 +126,66 @@ t('first works', () => {
     new Date(2021, 0, 20, 9, 0).getTime()
   ]
 })
+
+
+t('week between works', () => {
+  const v = recur({
+    dtstart: new Date(2025, 0, 1, 1),
+    rrule: {
+      freq: 'WEEKLY'
+    }
+  })
+
+  return [
+    v.between(new Date('2025-01-01'),new Date('2025-01-20')).length,
+    3
+  ]
+})
+
+
+t('daily between a month', () => {
+  const v = recur({
+    dtstart: new Date('2025-01-01T00:00:00'),
+    rrule: {
+      freq: 'DAILY'
+    }
+  })
+
+  const xs = v.between(
+      new Date('2025-01-01T00:00:00'),
+      new Date('2025-01-31T00:00:00')
+    )
+
+  return [
+    xs.length,
+    31
+  ]
+})
+
+t('monthly between', () => {
+  const v = recur({
+    dtstart: new Date('2025-01-01T00:00:00'),
+    rrule: {
+      freq: 'MONTHLY'
+    }
+  })
+
+  const xs = v.between(
+      new Date('2025-01-01T00:00:00'),
+      new Date('2025-12-01T00:00:00')
+    )
+
+  return [ xs.length, 12 ]
+})
+
+t('quartely (monthly between with interval 3)', () => {
+  const v = recur({
+    dtstart: new Date(2025, 0, 1, 1),
+    rrule: {
+      freq: 'MONTHLY',
+      interval: 3
+    }
+  })
+
+  return [ v.between(new Date('2025-01-01'),new Date('2025-12-31')).length, 4 ]
+})
