@@ -302,7 +302,7 @@ export default function Recur(input) {
       const s = date.getUTCSeconds()
       const ms = date.getUTCMilliseconds()
 
-      date = new  Date(Date.UTC(y, m + 1, d, h, mm, s, ms))
+      date = new  Date(Date.UTC(y, m + interval, d, h, mm, s, ms))
       return date
     }
   }
