@@ -178,7 +178,7 @@ t('monthly between', () => {
   return [ xs.length, 12 ]
 })
 
-t.o('quartely (monthly between with interval 3)', () => {
+t('quartely (monthly between with interval 3)', () => {
   const v = recur({
     dtstart: new Date(2025, 0, 1, 1),
     rrule: {
