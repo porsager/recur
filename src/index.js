@@ -238,8 +238,8 @@ export default function Recur(input) {
 
     let rest = count
 
-    const days      = byday.map(x => dayMap[x]).sort()
-        , firstDay  = days[0] * t.d
+    const days = byday.map(x => dayMap[x]).sort()
+        , firstDay = days[0] * t.d
 
     const stride = !count && !exdate && (
         r.freq === 'SECONDLY' ? t.s * interval
@@ -249,7 +249,7 @@ export default function Recur(input) {
       : 0
     )
 
-    const nextDay   = [...Array(days[days.length - 1])].reduce((acc, x, i) => {
+    const nextDay = [...Array(days[days.length - 1])].reduce((acc, x, i) => {
       acc[i] = (days.find(x => x > i) - i) * t.d
       return acc
     }, {})
@@ -327,7 +327,7 @@ export default function Recur(input) {
       const s = date.getUTCSeconds()
       const ms = date.getUTCMilliseconds()
 
-      date = new  Date(Date.UTC(y, m + interval, d, h, mm, s, ms))
+      date = new Date(Date.UTC(y, m + interval, d, h, mm, s, ms))
       return date
     }
   }
