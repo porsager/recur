@@ -253,6 +253,10 @@ export default function Recur(input) {
       : 0
     )
 
+    const weekStride = !count && !exdate && r.freq === 'WEEKLY'
+      ? t.w * interval
+      : 0
+
     const nextDay = [...Array(days[days.length - 1])].reduce((acc, x, i) => {
       acc[i] = (days.find(x => x > i) - i) * t.d
       return acc
@@ -281,6 +285,16 @@ export default function Recur(input) {
             const jumps = Math.floor(gap / stride) - 2
             if (jumps > 0)
               value = new Date(dtstart.getTime() + jumps * stride)
+          }
+        }
+
+        if (start && weekStride && !value) {
+          const startLocal = t.UTCToLocal(dtstart).getTime()
+          const gap = start.getTime() - startLocal
+          if (gap > weekStride) {
+            const cycles = Math.floor(gap / weekStride) - 2
+            if (cycles > 0)
+              value = new Date(dtstart.getTime() + cycles * weekStride)
           }
         }
 
