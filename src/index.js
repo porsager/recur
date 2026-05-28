@@ -42,6 +42,8 @@ export default function Recur(input) {
 
   const r = Object.assign({}, x.rrule || {})
 
+  let iter
+
   const recur = {
     get dtstart() { return x.dtstart },
     set dtstart(v) {
@@ -206,6 +208,10 @@ export default function Recur(input) {
   }
 
   function iterator(start) {
+    return (iter || (iter = createIterator()))(start)
+  }
+
+  function createIterator() {
     const freqs = {
       SECONDLY  : secondly(t.s),
       MINUTELY  : secondly(t.m),
@@ -236,8 +242,6 @@ export default function Recur(input) {
         // , bymonth = r.bymonth ? r.bymonth : []
         // , bysetpos = r.bysetpos ? r.bysetpos : []
 
-    let rest = count
-
     const days = byday.map(x => dayMap[x]).sort()
         , firstDay = days[0] * t.d
 
@@ -254,51 +258,56 @@ export default function Recur(input) {
       return acc
     }, {})
 
-    let value
-      , done
+    return make
 
-    return {
-      next: () => done || next(),
-      [Symbol.iterator]() { return this }
-    }
+    function make(start) {
+      let rest = count
+        , value
+        , done
 
-    function next() {
-      if (count && rest-- === 0)
-        return (done = { done: true })
-
-      if (start && stride && !value) {
-        const startLocal = t.UTCToLocal(dtstart).getTime()
-        const gap = start.getTime() - startLocal
-        if (gap > stride) {
-          const jumps = Math.floor(gap / stride) - 2
-          if (jumps > 0)
-            value = new Date(dtstart.getTime() + jumps * stride)
-        }
+      return {
+        next: () => done || next(),
+        [Symbol.iterator]() { return this }
       }
 
-      let x = get()
+      function next() {
+        if (count && rest-- === 0)
+          return (done = { done: true })
 
-      if (start) {
-        while (x.value && x.value.getTime() < start.getTime()) {
-          x = done || (
-            count && rest-- === 0
-              ? (done = { done: true })
-              : get()
-          )
+        if (start && stride && !value) {
+          const startLocal = t.UTCToLocal(dtstart).getTime()
+          const gap = start.getTime() - startLocal
+          if (gap > stride) {
+            const jumps = Math.floor(gap / stride) - 2
+            if (jumps > 0)
+              value = new Date(dtstart.getTime() + jumps * stride)
+          }
         }
+
+        let x = get()
+
+        if (start) {
+          while (x.value && x.value.getTime() < start.getTime()) {
+            x = done || (
+              count && rest-- === 0
+                ? (done = { done: true })
+                : get()
+            )
+          }
+        }
+
+        return x
       }
 
-      return x
-    }
+      function get() {
+        value = value ? freq ? freq(value) : 0 : dtstart
+        if (!value || (until && value.getTime() >= until))
+          return (done = { done: true })
 
-    function get() {
-      value = value ? freq ? freq(value) : 0 : dtstart
-      if (!value || (until && value.getTime() >= until))
-        return (done = { done: true })
-
-      return exdate && exdate.indexOf(value.getTime()) !== -1
-        ? get()
-        : { done: false, value: t.UTCToLocal(value) }
+        return exdate && exdate.indexOf(value.getTime()) !== -1
+          ? get()
+          : { done: false, value: t.UTCToLocal(value) }
+      }
     }
 
     function secondly(ms) {
