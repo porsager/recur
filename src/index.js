@@ -163,13 +163,19 @@ export default function Recur(input) {
 
   function contains(date) {
     const d = duration()
+    const dt = date.getTime()
+    const i = iterator(new Date(dt - d))
 
-    return between(
-      new Date(date.getTime() - d),
-      date
-    ).some(x =>
-      date.getTime() >= x.getTime() && (!d || date.getTime() < x.getTime() + d)
-    )
+    for (const x of i) {
+      if (!x)
+        break
+      const xt = x.getTime()
+      if (xt > dt)
+        break
+      if (!d || dt < xt + d)
+        return true
+    }
+    return false
   }
 
   function between(start, end) {
