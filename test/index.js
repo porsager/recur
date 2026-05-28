@@ -187,5 +187,13 @@ t('quartely (monthly between with interval 3)', () => {
     }
   })
 
-  return [ v.between(new Date('2025-01-01'),new Date('2025-12-31')).length, 4 ]
+  return [ v.between(new Date('2025-01-01'),new Date('2025-12-31')).length, 4]
+})
+
+t('single event', () => {
+  const v = recur({
+    dtstart: new Date(2025, 0, 1, 1)
+  })
+
+  return [ v.between(new Date('2025-01-01'),new Date('2025-12-31')).length, 1]
 })
