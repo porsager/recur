@@ -212,7 +212,8 @@ export default function Recur(input) {
     const wkst = r.wkst || 'MO'
         , dayMap = t.daysMap[wkst]
 
-    const dtstart = t.localToUTC(x.dtstart)
+    const count = r.count
+        , dtstart = t.localToUTC(x.dtstart)
         , dtend = x.dtend && t.localToUTC(x.dtstart)
         , exdate = x.exdate && x.exdate.map(x => t.localToUTC(x).getTime())
         , duration = x.duration && Object.assign({}, x.duration)
@@ -223,12 +224,11 @@ export default function Recur(input) {
         , byminute = r.byminute ? r.byminute : [dtstart.getMinutes()]
         , byhour = r.byhour ? r.byhour : [dtstart.getHours()]
         , byday = r.byday ? r.byday : [dayMap[dtstart.getDay()]]
-        , bymonthday = r.bymonthday ? r.bymonthday : [dtstart.getDate()]
-        , byyearday = r.byyearday ? r.byyearday : [t.yearDay(dtstart)]
-        , byweekno = r.byweekno ? r.byweekno : [t.weekNumber(dtstart)]
-        , bymonth = r.bymonth ? r.bymonth : []
-        , bysetpos = r.bysetpos ? r.bysetpos : []
-        , count = r.count
+        // , bymonthday = r.bymonthday ? r.bymonthday : [dtstart.getDate()]
+        // , byyearday = r.byyearday ? r.byyearday : [t.yearDay(dtstart)]
+        // , byweekno = r.byweekno ? r.byweekno : [t.weekNumber(dtstart)]
+        // , bymonth = r.bymonth ? r.bymonth : []
+        // , bysetpos = r.bysetpos ? r.bysetpos : []
 
     let rest = count
 
