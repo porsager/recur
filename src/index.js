@@ -241,6 +241,14 @@ export default function Recur(input) {
     const days      = byday.map(x => dayMap[x]).sort()
         , firstDay  = days[0] * t.d
 
+    const stride = !count && !exdate && (
+        r.freq === 'SECONDLY' ? t.s * interval
+      : r.freq === 'MINUTELY' ? t.m * interval
+      : r.freq === 'HOURLY'   ? t.h * interval
+      : r.freq === 'DAILY'    ? t.d * interval
+      : 0
+    )
+
     const nextDay   = [...Array(days[days.length - 1])].reduce((acc, x, i) => {
       acc[i] = (days.find(x => x > i) - i) * t.d
       return acc
@@ -257,6 +265,16 @@ export default function Recur(input) {
     function next() {
       if (count && rest-- === 0)
         return (done = { done: true })
+
+      if (start && stride && !value) {
+        const startLocal = t.UTCToLocal(dtstart).getTime()
+        const gap = start.getTime() - startLocal
+        if (gap > stride) {
+          const jumps = Math.floor(gap / stride) - 2
+          if (jumps > 0)
+            value = new Date(dtstart.getTime() + jumps * stride)
+        }
+      }
 
       let x = get()
 
