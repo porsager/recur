@@ -176,11 +176,11 @@ export default function Recur(input) {
     const i = iterator(start)
         , xs = []
 
-    let last = i.next().value
-
-    while (last && last.getTime() <= end.getTime()) {
-      xs.push(last)
-      last = i.next().value
+    for (const x of i) {
+      if (x && x.getTime() <= end.getTime())
+        xs.push(x)
+      else
+        break
     }
 
     return xs
@@ -244,7 +244,8 @@ export default function Recur(input) {
       , done
 
     return {
-      next: () => done || next()
+      next: () => done || next(),
+      [Symbol.iterator]() { return this }
     }
 
     function next() {
@@ -267,8 +268,8 @@ export default function Recur(input) {
     }
 
     function get() {
-      value = value ? freq(value) : dtstart
-      if (until && value.getTime() >= until)
+      value = value ? freq ? freq(value) : 0 : dtstart
+      if (!value || (until && value.getTime() >= until))
         return (done = { done: true })
 
       return exdate && exdate.indexOf(value.getTime()) !== -1
