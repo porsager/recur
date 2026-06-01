@@ -1,23 +1,8 @@
-import t from 'fantestic'
+import t from 'sin/test'
 import time from '../src/time.js'
 import recur from '../src/index.js'
 
-const { ot, nt } = t
-/*
-const v = recur(`DTSTART:20210119T090000
-EXDATE:20210124T090000
-RRULE:FREQ=WEEKLY;INTERVAL=2;BYDAY=SU,MO;WKST=MO
-`)
-    , from = new Date()
-    , to = new Date(from.getTime() + time.w * 416321)
-
-let start = Date.now()
-const xs = v.between(from, to)
-p(Date.now() - start)
-p(xs[0], xs[xs.length - 1], xs.length)
-*/
-
-t('iterator works', () => {
+t`iterator works`(() => {
   const v = recur(
     'DTSTART:19900106T220000\nDTEND:19900106T220500\nRRULE:FREQ=WEEKLY;BYDAY=SA'
   )
@@ -28,7 +13,7 @@ t('iterator works', () => {
   ]
 })
 
-t('iterator works with count', () => {
+t`iterator works with count`(() => {
   const v = recur(
     'DTSTART:19900106T220000\nDTEND:19900106T220500\nRRULE:FREQ=WEEKLY;BYDAY=SA;COUNT=1'
   )
@@ -41,7 +26,7 @@ t('iterator works with count', () => {
   ]
 })
 
-t('toString', () => {
+t`toString`(() => {
   const v = recur(
     'DTSTART:19900106T220000\nDTEND:19900106T220500\nRRULE:FREQ=WEEKLY;BYDAY=SA'
   )
@@ -52,7 +37,7 @@ t('toString', () => {
   ]
 })
 
-t('iterator with start works', () => {
+t`iterator with start works`(() => {
   const v = recur(
     'DTSTART:20200106T220000\nDTEND:20200106T220500\nRRULE:FREQ=WEEKLY;BYDAY=SA'
   )
@@ -63,7 +48,7 @@ t('iterator with start works', () => {
   ]
 })
 
-t('between works', () => {
+t`between works`(() => {
   const v = recur({
     dtstart: new Date(2021, 0, 20, 9),
     rrule: {
@@ -77,7 +62,7 @@ t('between works', () => {
   ]
 })
 
-t('contain works', () => {
+t`contain works`(() => {
   const v = recur({
     dtstart: new Date(2021, 0, 20, 9, 0),
     dtend: new Date(2021, 0, 20, 9, 30),
@@ -93,7 +78,7 @@ t('contain works', () => {
   ]
 })
 
-t('contain works with multiple', () => {
+t`contain works with multiple`(() => {
   const v = recur({
     dtstart: new Date('2023-01-02T13:00'),
     dtend: new Date('2023-01-02T17:00'),
@@ -109,7 +94,7 @@ t('contain works with multiple', () => {
   ]
 })
 
-t('first works', () => {
+t`first works`(() => {
   const v = recur({
     dtstart: new Date(2021, 0, 20, 9, 0),
     dtend: new Date(2021, 0, 20, 9, 30),
@@ -128,7 +113,7 @@ t('first works', () => {
 })
 
 
-t('week between works', () => {
+t`week between works`(() => {
   const v = recur({
     dtstart: new Date(2025, 0, 1, 1),
     rrule: {
@@ -143,7 +128,7 @@ t('week between works', () => {
 })
 
 
-t('daily between a month', () => {
+t`daily between a month`(() => {
   const v = recur({
     dtstart: new Date('2025-01-01T00:00:00'),
     rrule: {
@@ -162,7 +147,7 @@ t('daily between a month', () => {
   ]
 })
 
-t('monthly between', () => {
+t`monthly between`(() => {
   const v = recur({
     dtstart: new Date('2025-01-01T00:00:00'),
     rrule: {
@@ -178,7 +163,7 @@ t('monthly between', () => {
   return [ xs.length, 12 ]
 })
 
-t('quartely (monthly between with interval 3)', () => {
+t`quartely (monthly between with interval 3)`(() => {
   const v = recur({
     dtstart: new Date(2025, 0, 1, 1),
     rrule: {
@@ -190,7 +175,7 @@ t('quartely (monthly between with interval 3)', () => {
   return [ v.between(new Date('2025-01-01'),new Date('2025-12-31')).length, 4]
 })
 
-t('single event', () => {
+t`single event`(() => {
   const v = recur({
     dtstart: new Date(2025, 0, 1, 1)
   })

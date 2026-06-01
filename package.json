@@ -23,8 +23,5 @@
     "cjs"
   ],
   "author": "Rasmus Porsager <rasmus@porsager.com>",
-  "license": "WTFPL",
-  "devDependencies": {
-    "fantestic": "0.0.3"
-  }
+  "license": "WTFPL"
 }
