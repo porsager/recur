@@ -96,5 +96,4 @@ t.weekNumber = (date) => {
 
   return 1 + Math.ceil((firstThursday - date) / t.w)
 }
-
-t.yearDay = date => Math.floor((date.getTime() - Date.UTC(date.getFullYear, 0, 0)) / 24 * 60 * 60 * 1000)
+t.yearDay = date => Math.floor((Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()) - Date.UTC(date.getUTCFullYear(), 0, 0)) / 24 / 60 / 60 / 1000)
