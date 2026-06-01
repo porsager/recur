@@ -42,6 +42,8 @@ module.exports = Recur;function Recur(input) {
 
   const r = Object.assign({}, x.rrule || {})
 
+  let iter
+
   const recur = {
     get dtstart() { return x.dtstart },
     set dtstart(v) {
@@ -163,24 +165,30 @@ module.exports = Recur;function Recur(input) {
 
   function contains(date) {
     const d = duration()
+    const dt = date.getTime()
+    const i = iterator(new Date(dt - d))
 
-    return between(
-      new Date(date.getTime() - d),
-      date
-    ).some(x =>
-      date.getTime() >= x.getTime() && (!d || date.getTime() < x.getTime() + d)
-    )
+    for (const x of i) {
+      if (!x)
+        break
+      const xt = x.getTime()
+      if (xt > dt)
+        break
+      if (!d || dt < xt + d)
+        return true
+    }
+    return false
   }
 
   function between(start, end) {
     const i = iterator(start)
         , xs = []
 
-    let last = i.next().value
-
-    while (last && last.getTime() <= end.getTime()) {
-      xs.push(last)
-      last = i.next().value
+    for (const x of i) {
+      if (x && x.getTime() <= end.getTime())
+        xs.push(x)
+      else
+        break
     }
 
     return xs
@@ -200,6 +208,10 @@ module.exports = Recur;function Recur(input) {
   }
 
   function iterator(start) {
+    return (iter || (iter = createIterator()))(start)
+  }
+
+  function createIterator() {
     const freqs = {
       SECONDLY  : secondly(t.s),
       MINUTELY  : secondly(t.m),
@@ -212,8 +224,9 @@ module.exports = Recur;function Recur(input) {
     const wkst = r.wkst || 'MO'
         , dayMap = t.daysMap[wkst]
 
-    const dtstart = t.localToUTC(x.dtstart)
-        , dtend = x.dtend && t.localToUTC(x.dtstart)
+    const count = r.count
+        , dtstart = t.localToUTC(x.dtstart)
+        , dtend = x.dtend && t.localToUTC(x.dtend)
         , exdate = x.exdate && x.exdate.map(x => t.localToUTC(x).getTime())
         , duration = x.duration && Object.assign({}, x.duration)
         , freq = freqs[r.freq]
@@ -223,57 +236,92 @@ module.exports = Recur;function Recur(input) {
         , byminute = r.byminute ? r.byminute : [dtstart.getMinutes()]
         , byhour = r.byhour ? r.byhour : [dtstart.getHours()]
         , byday = r.byday ? r.byday : [dayMap[dtstart.getDay()]]
-        , bymonthday = r.bymonthday ? r.bymonthday : [dtstart.getDate()]
-        , byyearday = r.byyearday ? r.byyearday : [t.yearDay(dtstart)]
-        , byweekno = r.byweekno ? r.byweekno : [t.weekNumber(dtstart)]
-        , bymonth = r.bymonth ? r.bymonth : []
-        , bysetpos = r.bysetpos ? r.bysetpos : []
-        , count = r.count
+        // , bymonthday = r.bymonthday ? r.bymonthday : [dtstart.getDate()]
+        // , byyearday = r.byyearday ? r.byyearday : [t.yearDay(dtstart)]
+        // , byweekno = r.byweekno ? r.byweekno : [t.weekNumber(dtstart)]
+        // , bymonth = r.bymonth ? r.bymonth : []
+        // , bysetpos = r.bysetpos ? r.bysetpos : []
 
-    let rest = count
+    const days = byday.map(x => dayMap[x]).sort()
+        , firstDay = days[0] * t.d
 
-    const days      = byday.map(x => dayMap[x]).sort()
-        , firstDay  = days[0] * t.d
+    const stride = !count && !exdate && (
+        r.freq === 'SECONDLY' ? t.s * interval
+      : r.freq === 'MINUTELY' ? t.m * interval
+      : r.freq === 'HOURLY'   ? t.h * interval
+      : r.freq === 'DAILY'    ? t.d * interval
+      : 0
+    )
 
-    const nextDay   = [...Array(days[days.length - 1])].reduce((acc, x, i) => {
+    const weekStride = !count && !exdate && r.freq === 'WEEKLY'
+      ? t.w * interval
+      : 0
+
+    const nextDay = [...Array(days[days.length - 1])].reduce((acc, x, i) => {
       acc[i] = (days.find(x => x > i) - i) * t.d
       return acc
     }, {})
 
-    let value
-      , done
+    return make
 
-    return {
-      next: () => done || next()
-    }
+    function make(start) {
+      let rest = count
+        , value
+        , done
 
-    function next() {
-      if (count && rest-- === 0)
-        return (done = { done: true })
-
-      let x = get()
-
-      if (start) {
-        while (x.value && x.value.getTime() < start.getTime()) {
-          x = done || (
-            count && rest-- === 0
-              ? (done = { done: true })
-              : get()
-          )
-        }
+      return {
+        next: () => done || next(),
+        [Symbol.iterator]() { return this }
       }
 
-      return x
-    }
+      function next() {
+        if (count && rest-- === 0)
+          return (done = { done: true })
 
-    function get() {
-      value = value ? freq(value) : dtstart
-      if (until && value.getTime() >= until)
-        return (done = { done: true })
+        if (start && stride && !value) {
+          const startLocal = t.UTCToLocal(dtstart).getTime()
+          const gap = start.getTime() - startLocal
+          if (gap > stride) {
+            const jumps = Math.floor(gap / stride) - 2
+            if (jumps > 0)
+              value = new Date(dtstart.getTime() + jumps * stride)
+          }
+        }
 
-      return exdate && exdate.indexOf(value.getTime()) !== -1
-        ? get()
-        : { done: false, value: t.UTCToLocal(value) }
+        if (start && weekStride && !value) {
+          const startLocal = t.UTCToLocal(dtstart).getTime()
+          const gap = start.getTime() - startLocal
+          if (gap > weekStride) {
+            const cycles = Math.floor(gap / weekStride) - 2
+            if (cycles > 0)
+              value = new Date(dtstart.getTime() + cycles * weekStride)
+          }
+        }
+
+        let x = get()
+
+        if (start) {
+          while (x.value && x.value.getTime() < start.getTime()) {
+            x = done || (
+              count && rest-- === 0
+                ? (done = { done: true })
+                : get()
+            )
+          }
+        }
+
+        return x
+      }
+
+      function get() {
+        value = value ? freq ? freq(value) : 0 : dtstart
+        if (!value || (until && value.getTime() >= until))
+          return (done = { done: true })
+
+        return exdate && exdate.indexOf(value.getTime()) !== -1
+          ? get()
+          : { done: false, value: t.UTCToLocal(value) }
+      }
     }
 
     function secondly(ms) {
@@ -302,7 +350,7 @@ module.exports = Recur;function Recur(input) {
       const s = date.getUTCSeconds()
       const ms = date.getUTCMilliseconds()
 
-      date = new  Date(Date.UTC(y, m + interval, d, h, mm, s, ms))
+      date = new Date(Date.UTC(y, m + interval, d, h, mm, s, ms))
       return date
     }
   }
