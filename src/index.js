@@ -226,7 +226,7 @@ export default function Recur(input) {
 
     const count = r.count
         , dtstart = t.localToUTC(x.dtstart)
-        , dtend = x.dtend && t.localToUTC(x.dtstart)
+        , dtend = x.dtend && t.localToUTC(x.dtend)
         , exdate = x.exdate && x.exdate.map(x => t.localToUTC(x).getTime())
         , duration = x.duration && Object.assign({}, x.duration)
         , freq = freqs[r.freq]
