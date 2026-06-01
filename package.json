@@ -14,7 +14,7 @@
   },
   "repository": "porsager/recur",
   "scripts": {
-    "test": "node test/index.js",
+    "test": "sin start script tests/index.js",
     "build": "node build.cjs",
     "prepublishOnly": "npm run build"
   },
