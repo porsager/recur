@@ -405,3 +405,16 @@ t`until is exclusive on exact boundary`(() => {
     4
   ]
 })
+
+t`Monthly progresses correctly`(() => {
+  const v = recur('DTSTART:20251231T230000\nRRULE:FREQ=MONTHLY')
+  const iter = v.iterator()
+  iter.next()
+  iter.next()
+  const date = iter.next().value
+  console.log(date)
+  return [
+    1,
+    date.getMonth()
+  ]
+})

@@ -349,8 +349,8 @@ export default function Recur(input) {
       const mm = date.getUTCMinutes()
       const s = date.getUTCSeconds()
       const ms = date.getUTCMilliseconds()
-
-      date = new Date(Date.UTC(y, m + interval, d, h, mm, s, ms))
+      date = new Date(Date.UTC(y, m, d, h, mm, s, ms))
+      date.setMonth(date.getMonth() + 1)
       return date
     }
   }
