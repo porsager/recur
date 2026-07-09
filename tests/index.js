@@ -171,8 +171,8 @@ t`quartely (monthly between with interval 3)`(() => {
       interval: 3
     }
   })
-
-  return [ v.between(new Date('2025-01-01'),new Date('2025-12-31')).length, 4]
+  
+  return [v.between(new Date('2025-01-01'),new Date('2025-12-31')).length, 4]
 })
 
 t`single event`(() => {
@@ -412,7 +412,6 @@ t`Monthly progresses correctly`(() => {
   iter.next()
   iter.next()
   const date = iter.next().value
-  console.log(date)
   return [
     1,
     date.getMonth()
