@@ -28,22 +28,33 @@ const rruleParsers = {
   bysetpos: ints
 }
 
-export default function parse(a) {
-  let last = ''
-  const result = a.split('\n').reduce((acc, x) => {
-    if (x.charCodeAt(0) === 32) {
-      acc[last] += x.slice(1)
-    } else {
-      const colon = x.indexOf(':')
-          , semi = x.indexOf(';')
-          , idx = semi === -1 || colon < semi ? colon : semi
-          , key = x.slice(0, idx).toLowerCase().replace(/-/g, '_')
+function unfold(a) {
+  return a.split(/\r?\n/).reduce((acc, x) => {
+    if (!x)
+      return acc
 
-      key in veventParsers && (
-        acc[key] = veventParsers[key](x.slice(idx + 1)),
-        last = key
-      )
-    }
+    x.charCodeAt(0) === 32 || x.charCodeAt(0) === 9
+      ? acc[acc.length - 1] += x.slice(1)
+      : acc.push(x)
+
+    return acc
+  }, [])
+}
+
+export default function parse(a) {
+  const result = unfold(a).reduce((acc, x) => {
+    const colon = x.indexOf(':')
+    if (colon === -1)
+      return acc
+
+    const semi = x.indexOf(';')
+        , idx = semi === -1 || colon < semi ? colon : semi
+        , key = x.slice(0, idx).toLowerCase().replace(/-/g, '_')
+
+    key in veventParsers && (
+      acc[key] = veventParsers[key](x.slice(colon + 1))
+    )
+
     return acc
   }, {})
 
@@ -52,7 +63,7 @@ export default function parse(a) {
       const key = x.slice(0, x.indexOf('=')).toLowerCase()
           , value = x.slice(x.indexOf('=') + 1)
 
-      acc[key] = rruleParsers[key](value)
+      key in rruleParsers && (acc[key] = rruleParsers[key](value))
 
       return acc
     }, {})
