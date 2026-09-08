@@ -122,7 +122,7 @@ t`week between works`(() => {
   })
 
   return [
-    v.between(new Date('2025-01-01'),new Date('2025-01-20')).length,
+    v.between(new Date(2025, 0, 1), new Date(2025, 0, 20)).length,
     3
   ]
 })
@@ -172,7 +172,7 @@ t`quartely (monthly between with interval 3)`(() => {
     }
   })
 
-  return [v.between(new Date('2025-01-01'),new Date('2025-12-31')).length, 4]
+  return [v.between(new Date(2025, 0, 1), new Date(2025, 11, 31)).length, 4]
 })
 
 t`single event`(() => {
@@ -180,7 +180,7 @@ t`single event`(() => {
     dtstart: new Date(2025, 0, 1, 1)
   })
 
-  return [ v.between(new Date('2025-01-01'),new Date('2025-12-31')).length, 1]
+  return [ v.between(new Date(2025, 0, 1), new Date(2025, 11, 31)).length, 1]
 })
 
 t`daily fast-forward lands on exact occurrence`(() => {
