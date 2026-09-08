@@ -666,3 +666,267 @@ t`between only yields dates matching byday`(() => {
     true
   ]
 })
+
+t`daily byday filters instead of being ignored`(() => {
+  const v = recur('DTSTART:20260417T000000\nDTEND:20260417T235900\nRRULE:FREQ=DAILY;BYDAY=TU,TH,SA')
+  const xs = v.between(new Date(2026, 3, 17), new Date(2026, 4, 3))
+  return [
+    xs.map(x => new Date(x).getDate()).join(','),
+    '18,21,23,25,28,30,2'
+  ]
+})
+
+t`daily byday drops a dtstart that does not match`(() => {
+  const v = recur('DTSTART:20260417T000000\nRRULE:FREQ=DAILY;BYDAY=TU,TH,SA')
+  return [
+    v.first(),
+    new Date(2026, 3, 18).getTime()
+  ]
+})
+
+t`daily byday keeps a dtstart that does match`(() => {
+  const v = recur('DTSTART:20260421T000000\nRRULE:FREQ=DAILY;BYDAY=TU,TH,SA')
+  return [
+    v.first(),
+    new Date(2026, 3, 21).getTime()
+  ]
+})
+
+t`daily byday matches the equivalent weekly rule`(() => {
+  const daily = recur('DTSTART:20260417T090000\nRRULE:FREQ=DAILY;BYDAY=TU,TH,SA')
+  const weekly = recur('DTSTART:20260417T090000\nRRULE:FREQ=WEEKLY;BYDAY=TU,TH,SA')
+  return [
+    daily.between(new Date(2026, 3, 1), new Date(2026, 6, 1)).join(','),
+    weekly.between(new Date(2026, 3, 1), new Date(2026, 6, 1)).join(',')
+  ]
+})
+
+t`daily byday matches weekly for every byday subset`(() => {
+  const days = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA']
+  let mismatched = 0
+  for (let m = 1; m < 128; m++) {
+    const byday = days.filter((x, i) => m & (1 << i)).join(',')
+    const a = recur(`DTSTART:20260417T090000\nRRULE:FREQ=DAILY;BYDAY=${byday}`)
+    const b = recur(`DTSTART:20260417T090000\nRRULE:FREQ=WEEKLY;BYDAY=${byday}`)
+    const from = new Date(2026, 3, 1)
+        , to = new Date(2026, 5, 1)
+
+    a.between(from, to).join(',') === b.between(from, to).join(',') || mismatched++
+  }
+
+  return [ mismatched, 0 ]
+})
+
+t`daily byday listing all seven days equals plain daily`(() => {
+  const filtered = recur('DTSTART:20260417T000000\nRRULE:FREQ=DAILY;BYDAY=MO,TU,WE,TH,FR,SA,SU')
+  const plain = recur('DTSTART:20260417T000000\nRRULE:FREQ=DAILY')
+  return [
+    filtered.between(new Date(2026, 3, 17), new Date(2026, 4, 17)).join(','),
+    plain.between(new Date(2026, 3, 17), new Date(2026, 4, 17)).join(',')
+  ]
+})
+
+t`daily byday with interval filters the cycle`(() => {
+  const v = recur('DTSTART:20260417T000000\nRRULE:FREQ=DAILY;INTERVAL=2;BYDAY=TU,TH,SA')
+  const xs = v.between(new Date(2026, 3, 17), new Date(2026, 4, 10))
+  return [
+    xs.map(x => new Date(x).getMonth() + '-' + new Date(x).getDate()).join(','),
+    '3-21,3-23,3-25,4-5,4-7,4-9'
+  ]
+})
+
+t`daily byday interval 3 with one day is a 21 day cycle`(() => {
+  const v = recur('DTSTART:20260417T000000\nRRULE:FREQ=DAILY;INTERVAL=3;BYDAY=MO')
+  const xs = v.between(new Date(2026, 3, 17), new Date(2026, 5, 30))
+  return [
+    xs.map(x => new Date(x).getMonth() + '-' + new Date(x).getDate()).join(','),
+    '3-20,4-11,5-1,5-22'
+  ]
+})
+
+t`daily byday interval 7 keeps the dtstart weekday`(() => {
+  const v = recur('DTSTART:20260421T000000\nRRULE:FREQ=DAILY;INTERVAL=7;BYDAY=TU')
+  const xs = v.between(new Date(2026, 3, 21), new Date(2026, 4, 13))
+  return [
+    xs.map(x => new Date(x).getDate()).join(','),
+    '21,28,5,12'
+  ]
+})
+
+t`daily byday that can never match yields nothing`(() => {
+  const v = recur('DTSTART:20260417T000000\nRRULE:FREQ=DAILY;INTERVAL=7;BYDAY=TU,TH,SA')
+  return [
+    v.first(),
+    undefined
+  ]
+})
+
+t`daily byday that can never match returns an empty between`(() => {
+  const v = recur('DTSTART:20260417T000000\nRRULE:FREQ=DAILY;INTERVAL=14;BYDAY=MO')
+  return [
+    v.between(new Date(2026, 0, 1), new Date(2030, 0, 1)).length,
+    0
+  ]
+})
+
+t`daily byday that can never match is done immediately`(() => {
+  const v = recur('DTSTART:20260417T000000\nRRULE:FREQ=DAILY;INTERVAL=21;BYDAY=SA,SU')
+  return [
+    v.iterator().next().done,
+    true
+  ]
+})
+
+t`unsatisfiable byday behaves like until before dtstart`(() => {
+  const never = recur('DTSTART:20260417T000000\nRRULE:FREQ=DAILY;INTERVAL=7;BYDAY=TU')
+  const past = recur('DTSTART:20260417T000000\nRRULE:FREQ=DAILY;UNTIL=20200101T000000')
+  return [
+    never.first() + '/' + never.between(new Date(2026, 0, 1), new Date(2027, 0, 1)).length,
+    past.first() + '/' + past.between(new Date(2026, 0, 1), new Date(2027, 0, 1)).length
+  ]
+})
+
+t`empty byday array yields nothing rather than looping`(() => {
+  const v = recur({
+    dtstart: new Date(2026, 3, 17),
+    rrule: { freq: 'DAILY', byday: [] }
+  })
+
+  return [
+    v.between(new Date(2026, 0, 1), new Date(2027, 0, 1)).length,
+    0
+  ]
+})
+
+t`daily byday count caps emitted occurrences not skipped days`(() => {
+  const v = recur('DTSTART:20260417T000000\nRRULE:FREQ=DAILY;BYDAY=TU,TH,SA;COUNT=4')
+  const xs = v.between(new Date(2026, 3, 17), new Date(2026, 5, 1))
+  return [
+    xs.length + ':' + xs.map(x => new Date(x).getDate()).join(','),
+    '4:18,21,23,25'
+  ]
+})
+
+t`daily byday until is inclusive on the boundary`(() => {
+  const v = recur('DTSTART:20260417T000000\nRRULE:FREQ=DAILY;BYDAY=TU,TH,SA;UNTIL=20260425T000000')
+  return [
+    v.between(new Date(2026, 3, 17), new Date(2026, 5, 1)).length,
+    4
+  ]
+})
+
+t`daily byday excludes an exdate`(() => {
+  const v = recur('DTSTART:20260417T000000\nEXDATE:20260421T000000\nRRULE:FREQ=DAILY;BYDAY=TU,TH,SA')
+  return [
+    v.between(new Date(2026, 3, 17), new Date(2026, 4, 1)).some(d =>
+      d === new Date(2026, 3, 21).getTime()
+    ),
+    false
+  ]
+})
+
+t`daily byday filter survives fast-forward`(() => {
+  const v = recur('DTSTART:20260417T000000\nRRULE:FREQ=DAILY;BYDAY=TU,TH,SA')
+  const xs = v.between(new Date(2027, 0, 1), new Date(2027, 0, 15))
+  return [
+    xs.every(d => [2, 4, 6].includes(new Date(d).getDay())),
+    true
+  ]
+})
+
+t`daily byday fast-forward lands on the first matching day`(() => {
+  const v = recur('DTSTART:20260417T000000\nRRULE:FREQ=DAILY;BYDAY=TU,TH,SA')
+  return [
+    v.iterator(new Date(2027, 0, 1)).next().value,
+    new Date(2027, 0, 2).getTime()
+  ]
+})
+
+t`daily byday contains respects the filter`(() => {
+  const v = recur('DTSTART:20260417T000000\nDTEND:20260417T235900\nRRULE:FREQ=DAILY;BYDAY=TU,TH,SA')
+  return [
+    [
+      v.contains(new Date(2026, 3, 18, 12)), // Saturday
+      v.contains(new Date(2026, 3, 20, 12)), // Monday
+      v.contains(new Date(2026, 3, 17, 12))  // Friday, the dtstart day
+    ].join(','),
+    'true,false,false'
+  ]
+})
+
+t`daily byday keeps local time across DST`(() => {
+  const v = recur('DTSTART:20260326T090000\nRRULE:FREQ=DAILY;BYDAY=MO,TH')
+  const xs = v.between(new Date(2026, 2, 26), new Date(2026, 3, 20))
+  return [
+    xs.every(x => {
+      const d = new Date(x)
+      return d.getHours() === 9 && d.getMinutes() === 0
+    }),
+    true
+  ]
+})
+
+t`daily byday ignores wkst`(() => {
+  const mo = recur('DTSTART:20260417T000000\nRRULE:FREQ=DAILY;BYDAY=TU,TH,SA;WKST=MO')
+  const su = recur('DTSTART:20260417T000000\nRRULE:FREQ=DAILY;BYDAY=TU,TH,SA;WKST=SU')
+  return [
+    mo.between(new Date(2026, 3, 17), new Date(2026, 4, 17)).join(','),
+    su.between(new Date(2026, 3, 17), new Date(2026, 4, 17)).join(',')
+  ]
+})
+
+t`daily byday works through the object api`(() => {
+  const v = recur({ dtstart: new Date(2026, 3, 17), rrule: { freq: 'DAILY', byday: ['TU', 'TH', 'SA'] } })
+  return [
+    v.first(),
+    new Date(2026, 3, 18).getTime()
+  ]
+})
+
+t`daily byday setter invalidates the cached iterator`(() => {
+  const v = recur({ dtstart: new Date(2026, 3, 17), rrule: { freq: 'DAILY' } })
+  v.between(new Date(2026, 3, 17), new Date(2026, 3, 30))
+  v.rrule.byday = ['TU', 'TH', 'SA']
+  return [
+    v.between(new Date(2026, 3, 17), new Date(2026, 3, 30)).length,
+    6
+  ]
+})
+
+t`daily byday round-trips through toString`(() => {
+  const v = recur('DTSTART:20260417T000000\nDTEND:20260417T235900\nRRULE:FREQ=DAILY;BYDAY=TU,TH,SA')
+  return [
+    v.toString(),
+    'DTSTART:20260417T000000\r\nDTEND:20260417T235900\r\nRRULE:FREQ=DAILY;BYDAY=TU,TH,SA'
+  ]
+})
+
+t`daily without byday is unaffected`(() => {
+  const v = recur('DTSTART:20260417T000000\nRRULE:FREQ=DAILY')
+  return [
+    v.between(new Date(2026, 3, 17), new Date(2026, 3, 21)).map(x =>
+      new Date(x).getDate()
+    ).join(','),
+    '17,18,19,20,21'
+  ]
+})
+
+t`daily with interval and no byday is unaffected`(() => {
+  const v = recur('DTSTART:20260417T000000\nRRULE:FREQ=DAILY;INTERVAL=5')
+  return [
+    v.between(new Date(2026, 3, 17), new Date(2026, 3, 30)).map(x =>
+      new Date(x).getDate()
+    ).join(','),
+    '17,22,27'
+  ]
+})
+
+t`weekly byday is unaffected by the daily filter`(() => {
+  const v = recur('DTSTART:20260417T000000\nRRULE:FREQ=WEEKLY;BYDAY=TU,TH')
+  return [
+    v.between(new Date(2026, 3, 17), new Date(2026, 4, 1)).map(x =>
+      new Date(x).getDate()
+    ).join(','),
+    '21,23,28,30'
+  ]
+})

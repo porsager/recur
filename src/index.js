@@ -236,7 +236,7 @@ export default function Recur(input) {
         , interval = r.interval || 1
         , until = r.until && t.localToUTC(r.until).getTime()
         , byday = r.byday ? r.byday : [t.days[dtstart.getUTCDay()]]
-    
+
     const y0 = dtstart.getUTCFullYear()
         , m0 = dtstart.getUTCMonth()
         , anchorDay = dtstart.getUTCDate()
@@ -255,8 +255,9 @@ export default function Recur(input) {
 
     const freq = freqs[r.freq]
         , weekly = r.freq === 'WEEKLY'
-
-    const days = byday.map(x => dayMap[x]).sort()
+        , bydays = r.freq === 'DAILY' && r.byday ? r.byday.reduce((acc, d) => (acc[t.days.indexOf(('' + d).slice(-2))] = true, acc), []) : null
+        , empty = !!bydays && !(bydays && (interval % 7 === 0 ? [dow(dtstartTime)] : [0, 1, 2, 3, 4, 5, 6])).some(d => bydays[d])
+        , days = byday.map(x => dayMap[x]).sort()
         , firstDay = days[0] * t.d
 
     const stride = !count && !exdate && (
@@ -361,18 +362,27 @@ export default function Recur(input) {
       }
 
       function advance() {
-        value = value === null
-          ? initial()
-          : freq
-            ? freq(value)
-            : null
-
-        if (value === null || (until && value > until))
+        if (empty)
           return null
 
-        return exdate && exdate.has(value)
-          ? advance()
-          : value + offset(value)
+        while (true) {
+          value = value === null
+            ? initial()
+            : freq
+              ? freq(value)
+              : null
+
+          if (value === null || (until && value > until))
+            return null
+
+          if (bydays && !bydays[dow(value)])
+            continue
+
+          if (exdate && exdate.has(value))
+            continue
+
+          return value + offset(value)
+        }
       }
 
       function initial() {
