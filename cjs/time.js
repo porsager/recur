@@ -2,10 +2,6 @@ const t = { s: 1000 }
 
 module.exports = t
 
-t.dayOfYear = d => Math.floor(
-  (Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) - Date.UTC(d.getFullYear(), 0, 0)) / 24 / 60 / 60 / 1000
-)
-
 t.days = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA']
 t.daysMap = t.days.reduce((acc, day, dayInt) => {
   acc[day] = t.days.reduce((acc, x, i) => {
@@ -48,8 +44,16 @@ t.fromDuration = x => {
   return xs
 }
 
+t.durationMs = x => (x.sign === '-' ? -1 : 1) * (
+  (x.weeks || 0) * t.w +
+  (x.days || 0) * t.d +
+  (x.hours || 0) * t.h +
+  (x.minutes || 0) * t.m +
+  (x.seconds || 0) * t.s
+)
+
 t.toDuration = x => {
-  return (x.sign === '-' ? '-' : '') + 'P' +
+  return (x.sign === '-' ? '-' : '') + 'P' + ((
     (x.years ? x.years + 'Y' : '') +
     (x.months ? x.months + 'M' : '') +
     (x.weeks ? x.weeks + 'W' : '') +
@@ -58,19 +62,22 @@ t.toDuration = x => {
     (x.hours ? x.hours + 'H' : '') +
     (x.minutes ? x.minutes + 'M' : '') +
     (x.seconds ? x.seconds + 'S' : '')
+  ) || 'T0S')
 }
 
-t.parse = x => x.split(/[Z+]/)[0]
-  .match(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})$/)
+t.parse = x => x.split(/[Z+]/)[0].trim()
+  .match(/^(\d{4})(\d{2})(\d{2})(?:T(\d{2})(\d{2})(\d{2}))?$/)
   .slice(1)
   .map((x, i) =>
-    1 * (
-      i === 1 // Months are 0 indexed
-        ? x - 1
-        : i === 5 && x === '60' // Leap seconds
-          ? 59
-          : x
-    )
+    x == null
+      ? 0
+      : 1 * (
+        i === 1 // Months are 0 indexed
+          ? x - 1
+          : i === 5 && x === '60' // Leap seconds
+            ? 59
+            : x
+      )
   )
 
 t.UTCToLocal = x => new Date(x.getTime() + (x.getTimezoneOffset() * 60000))
@@ -96,4 +103,5 @@ t.weekNumber = (date) => {
 
   return 1 + Math.ceil((firstThursday - date) / t.w)
 }
+
 t.yearDay = date => Math.floor((Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()) - Date.UTC(date.getUTCFullYear(), 0, 0)) / 24 / 60 / 60 / 1000)

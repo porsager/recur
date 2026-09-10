@@ -8,11 +8,14 @@ const freqs = {
   SECONDLY: x => x.byweekno = undefined,
   MINUTELY: x => x.byweekno = undefined,
   HOURLY  : x => x.byweekno = undefined,
-  DAILY   : x => (x => x.byweekno = undefined, x.byyearday = undefined),
-  WEEKLY  : x => (x => x.byweekno = undefined, x.byyearday = undefined, x.bymonthday = undefined),
-  MONTHLY : x => (x => x.byweekno = undefined, x.byyearday = undefined),
+  DAILY   : x => (x.byweekno = undefined, x.byyearday = undefined),
+  WEEKLY  : x => (x.byweekno = undefined, x.byyearday = undefined, x.bymonthday = undefined),
+  MONTHLY : x => (x.byweekno = undefined, x.byyearday = undefined),
   YEARLY  : x => { /* noop */ }
 }
+
+const unimplemented = ['bysecond', 'byminute', 'byhour', 'bymonthday', 'byyearday', 'byweekno', 'bymonth', 'bysetpos']
+const monthTable = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 
 function isBetween(key, value, ...ranges) {
   if (value != null && (value % 1 !== 0 || !ranges.some(x => value >= x[0] && value <= x[1])))
@@ -26,6 +29,14 @@ function isIn(xs, key, value) {
     throw new Error(key + ': ' + value + ' is invalid - must be one of ' + Object.keys(xs).join(' | '))
 
   return value
+}
+
+function toDate(key, value) {
+  return isDate(key, typeof value === 'number' ? new Date(value) : value)
+}
+
+function ms(x) {
+  return x instanceof Date ? x.getTime() : x
 }
 
 function isDate(key, value) {
@@ -43,77 +54,80 @@ module.exports = Recur;function Recur(input) {
   const r = Object.assign({}, x.rrule || {})
 
   let iter
+    , dur
+
+  const invalidate = () => iter = dur = undefined
 
   const recur = {
     get dtstart() { return x.dtstart },
     set dtstart(v) {
-      isDate('DTSTART', v)
+      v = toDate('DTSTART', v)
       const d = x.dtend && duration()
       x.dtstart = v
       if (d && x.dtstart.getTime() > x.dtend.getTime())
-        x.dtend = new Date(x.dtend.getTime() + d)
+        x.dtend = new Date(v.getTime() + d)
+      invalidate()
     },
 
     get dtend() { return x.dtend },
     set dtend(v) {
-      isDate('DTEND', v)
+      v = toDate('DTEND', v)
       if (v.getTime() < x.dtstart.getTime())
         throw new Error('DTEND = ' + v + ' can not be lower than DTSTART = ' + x.dtstart)
 
       x.dtend = v
       x.duration = undefined
+      invalidate()
     },
 
     get duration() { return x.duration },
-    set duration(v) { (x.dtend = undefined, x.duration = v) },
+    set duration(v) { (x.dtend = undefined, x.duration = v, invalidate()) },
 
     get exdate() { return x.exdate || (x.exdate = []) },
-    set exdate(v) { x.exdate = v.length ? v.map(x => isDate('EXDATE', x)) : undefined },
+    set exdate(v) { (x.exdate = v.length ? v.map(x => toDate('EXDATE', x)) : undefined, invalidate()) },
 
     rrule: {
       get freq() { return r.freq },
-      set freq(v) {
-        r.freq = isIn(freqs, 'FREQ', v)
-      },
+      set freq(v) { (r.freq = isIn(freqs, 'FREQ', v), invalidate()) },
 
       get interval() { return r.interval },
-      set interval(v) { r.interval = isBetween('INTERVAL', v, [1, 2147483647]) },
+      set interval(v) { (r.interval = isBetween('INTERVAL', v, [1, 2147483647]), invalidate()) },
 
       get count() { return r.count },
-      set count(v) { r.count = isBetween('INTERVAL', v, [1, 2147483647]) },
+      set count(v) { (r.count = isBetween('COUNT', v, [1, 2147483647]), invalidate()) },
 
       get until() { return r.until },
-      set until(v) { r.until = isDate('UNTIL', v) },
+      set until(v) { (r.until = toDate('UNTIL', v), invalidate()) },
 
       get bysecond() { return r.bysecond },
-      set bysecond(v) { r.bysecond = v.map(x => isBetween('BYSECOND', x, [0, 60])) },
+      set bysecond(v) { (r.bysecond = v.map(x => isBetween('BYSECOND', x, [0, 60])), invalidate()) },
 
       get byminute() { return r.byminute },
-      set byminute(v) { r.byminute = v.map(x => isBetween('BYMINUTE', x, [0, 59])) },
+      set byminute(v) { (r.byminute = v.map(x => isBetween('BYMINUTE', x, [0, 59])), invalidate()) },
 
       get byhour() { return r.byhour },
-      set byhour(v) { r.byhour = v.map(x => isBetween('BYHOUR', x, [0, 23])) },
+      set byhour(v) { (r.byhour = v.map(x => isBetween('BYHOUR', x, [0, 23])), invalidate()) },
 
       get byday() { return r.byday },
-      set byday(v) { r.byday = v.map(x => isIn(t.daysMap, 'BYDAY', ('' + x).slice(-2)), x) },
+      set byday(v) { (r.byday = v.map(x => (isIn(t.daysMap, 'BYDAY', ('' + x).slice(-2)), x)), invalidate()) },
 
       get bymonthday() { return r.bymonthday },
-      set bymonthday(v) { r.bymonthday = v.map(x => isBetween('BYHOUR', x, [-31, -1], [1, 31])) },
+      set bymonthday(v) { (r.bymonthday = v.map(x => isBetween('BYMONTHDAY', x, [-31, -1], [1, 31])), invalidate()) },
 
       get byyearday() { return r.byyearday },
-      set byyearday(v) { r.byyearday = v.map(x => isBetween('BYHOUR', x, [-366, -1], [1, 366])) },
+      set byyearday(v) { (r.byyearday = v.map(x => isBetween('BYYEARDAY', x, [-366, -1], [1, 366])), invalidate()) },
 
       get byweekno() { return r.byweekno },
-      set byweekno(v) { r.byweekno = v.map(x => isBetween('BYWEEKNO', x, [-53, -1], [1, 53])) },
+      set byweekno(v) { (r.byweekno = v.map(x => isBetween('BYWEEKNO', x, [-53, -1], [1, 53])), invalidate()) },
 
       get bymonth() { return r.bymonth },
-      set bymonth(v) { r.bymonth = v.map(x => isBetween('BYMONTH', x, [1, 12])) },
+      set bymonth(v) { (r.bymonth = v.map(x => isBetween('BYMONTH', x, [1, 12])), invalidate()) },
 
       get wkst() { return r.wkst },
-      set wkst(v) { r.wkst = isIn(t.daysMap, 'BYSETPOS', v) },
+      set wkst(v) { (r.wkst = isIn(t.daysMap, 'WKST', v), invalidate()) },
 
       get bysetpos() { return r.bysetpos },
-      set bysetpos(v) { r.bysetpos = v.map(x => isBetween('BYSETPOS', x, [-366, -1], [1, 366])) }
+      set bysetpos(v) { (r.bysetpos = v.map(x => isBetween('BYSETPOS', x, [-366, -1], [1, 366])), invalidate()) }
     }
   }
 
@@ -127,27 +141,27 @@ module.exports = Recur;function Recur(input) {
 
   Object.defineProperties(recur, {
     toString: {
-      enumerate: false,
+      enumerable: false,
       value: () => stringify(x, r)
     },
     iterator: {
-      enumerate: false,
+      enumerable: false,
       value: iterator
     },
     between: {
-      enumerate: false,
+      enumerable: false,
       value: between
     },
     contains: {
-      enumerate: false,
+      enumerable: false,
       value: contains
     },
     first: {
-      enumerate: false,
+      enumerable: false,
       value: first
     },
     utcDuration: {
-      enumerate: false,
+      enumerable: false,
       value: duration
     }
   })
@@ -155,26 +169,27 @@ module.exports = Recur;function Recur(input) {
   return recur
 
   function duration() {
-    return recur.duration
-      ? recur.duration * 1000
-      : (recur.dtend
-        ? (t.localToUTC(isDate('DTEND', recur.dtend)).getTime() - t.localToUTC(recur.dtstart).getTime())
-        : 0
-      )
+    return dur !== undefined ? dur : (dur =
+      recur.duration
+        ? typeof recur.duration === 'number'
+          ? recur.duration * 1000
+          : t.durationMs(recur.duration)
+        : (recur.dtend
+          ? (t.localToUTC(isDate('DTEND', recur.dtend)).getTime() - t.localToUTC(recur.dtstart).getTime())
+          : 0
+        )
+    )
   }
 
   function contains(date) {
     const d = duration()
-    const dt = date.getTime()
-    const i = iterator(new Date(dt - d))
+    const dt = ms(date)
+    const i = iterator(dt - d)
 
     for (const x of i) {
-      if (!x)
+      if (x > dt)
         break
-      const xt = x.getTime()
-      if (xt > dt)
-        break
-      if (!d || dt < xt + d)
+      if (!d || dt < x + d)
         return true
     }
     return false
@@ -182,10 +197,11 @@ module.exports = Recur;function Recur(input) {
 
   function between(start, end) {
     const i = iterator(start)
+        , endTime = ms(end)
         , xs = []
 
     for (const x of i) {
-      if (x && x.getTime() <= end.getTime())
+      if (x <= endTime)
         xs.push(x)
       else
         break
@@ -195,16 +211,7 @@ module.exports = Recur;function Recur(input) {
   }
 
   function first() {
-    const i = iterator()
-        , date = i.next().value
-
-    return valid(date)
-      ? date
-      : i.next().value
-  }
-
-  function valid(date) {
-    return r.byday.includes(t.days[date.getDay()])
+    return iterator().next().value
   }
 
   function iterator(start) {
@@ -212,37 +219,45 @@ module.exports = Recur;function Recur(input) {
   }
 
   function createIterator() {
+    const bad = unimplemented.filter(k => r[k] != null)
+    r.byday && r.byday.some(x => ('' + x).length > 2) && bad.push('byday with ordinal prefix')
+    if (bad.length)
+      throw new Error('Unsupported RRULE parts: ' + bad.join(', ').toUpperCase())
+
+    const wkst = r.wkst || 'MO'
+        , dayMap = t.daysMap[wkst]
+
+    const scratch = new Date()
+
+    const count = r.count
+        , dtstart = t.localToUTC(x.dtstart)
+        , dtstartTime = dtstart.getTime()
+        , exdate = x.exdate && new Set(x.exdate.map(x => t.localToUTC(x).getTime()))
+        , interval = r.interval || 1
+        , until = r.until && t.localToUTC(r.until).getTime()
+        , byday = r.byday ? r.byday : [t.days[dtstart.getUTCDay()]]
+
+    const y0 = dtstart.getUTCFullYear()
+        , m0 = dtstart.getUTCMonth()
+        , anchorDay = dtstart.getUTCDate()
+        , tod = dtstart.getUTCHours() * t.h + dtstart.getUTCMinutes() * t.m +
+                dtstart.getUTCSeconds() * t.s + dtstart.getUTCMilliseconds()
+
     const freqs = {
       SECONDLY  : secondly(t.s),
       MINUTELY  : secondly(t.m),
       HOURLY    : secondly(t.h),
       DAILY     : secondly(t.d),
       WEEKLY,
-      MONTHLY
+      MONTHLY,
+      YEARLY
     }
 
-    const wkst = r.wkst || 'MO'
-        , dayMap = t.daysMap[wkst]
-
-    const count = r.count
-        , dtstart = t.localToUTC(x.dtstart)
-        , dtend = x.dtend && t.localToUTC(x.dtend)
-        , exdate = x.exdate && x.exdate.map(x => t.localToUTC(x).getTime())
-        , duration = x.duration && Object.assign({}, x.duration)
-        , freq = freqs[r.freq]
-        , interval = r.interval || 1
-        , until = r.until && t.localToUTC(r.until).getTime()
-        , bysecond = r.bysecond ? r.bysecond : [dtstart.getSeconds()]
-        , byminute = r.byminute ? r.byminute : [dtstart.getMinutes()]
-        , byhour = r.byhour ? r.byhour : [dtstart.getHours()]
-        , byday = r.byday ? r.byday : [dayMap[dtstart.getDay()]]
-        // , bymonthday = r.bymonthday ? r.bymonthday : [dtstart.getDate()]
-        // , byyearday = r.byyearday ? r.byyearday : [t.yearDay(dtstart)]
-        // , byweekno = r.byweekno ? r.byweekno : [t.weekNumber(dtstart)]
-        // , bymonth = r.bymonth ? r.bymonth : []
-        // , bysetpos = r.bysetpos ? r.bysetpos : []
-
-    const days = byday.map(x => dayMap[x]).sort()
+    const freq = freqs[r.freq]
+        , weekly = r.freq === 'WEEKLY'
+        , bydays = r.freq === 'DAILY' && r.byday ? r.byday.reduce((acc, d) => (acc[t.days.indexOf(('' + d).slice(-2))] = true, acc), []) : null
+        , empty = !!bydays && !(bydays && (interval % 7 === 0 ? [dow(dtstartTime)] : [0, 1, 2, 3, 4, 5, 6])).some(d => bydays[d])
+        , days = byday.map(x => dayMap[x]).sort()
         , firstDay = days[0] * t.d
 
     const stride = !count && !exdate && (
@@ -253,9 +268,12 @@ module.exports = Recur;function Recur(input) {
       : 0
     )
 
-    const weekStride = !count && !exdate && r.freq === 'WEEKLY'
+    const weekStride = !count && !exdate && weekly
       ? t.w * interval
       : 0
+
+    const monthSeek = !count && !exdate && r.freq === 'MONTHLY'
+        , yearSeek = !count && !exdate && r.freq === 'YEARLY'
 
     const nextDay = [...Array(days[days.length - 1])].reduce((acc, x, i) => {
       acc[i] = (days.find(x => x > i) - i) * t.d
@@ -264,9 +282,34 @@ module.exports = Recur;function Recur(input) {
 
     return make
 
+    function dow(ms) {
+      return ((Math.floor(ms / t.d) % 7) + 11) % 7
+    }
+
+    function offset(ms) {
+      scratch.setTime(ms)
+      return scratch.getTimezoneOffset() * 60000
+    }
+
+    function daysInMonth(y, m) {
+      const q = Math.floor(m / 12)
+      y += q
+      m -= q * 12
+      return m === 1 && y % 4 === 0 && (y % 100 !== 0 || y % 400 === 0)
+        ? 29
+        : monthTable[m]
+    }
+
+    function monthOcc(y, m) {
+      return Date.UTC(y, m, Math.min(anchorDay, daysInMonth(y, m))) + tod
+    }
+
     function make(start) {
+      start == null || start instanceof Date || (start = new Date(start))
+
       let rest = count
-        , value
+        , value = null
+        , seeked = false
         , done
 
       return {
@@ -278,79 +321,99 @@ module.exports = Recur;function Recur(input) {
         if (count && rest-- === 0)
           return (done = { done: true })
 
-        if (start && stride && !value) {
-          const startLocal = t.UTCToLocal(dtstart).getTime()
-          const gap = start.getTime() - startLocal
-          if (gap > stride) {
-            const jumps = Math.floor(gap / stride) - 2
-            if (jumps > 0)
-              value = new Date(dtstart.getTime() + jumps * stride)
-          }
-        }
+        const lt = start && !seeked ? seek() : advance()
 
-        if (start && weekStride && !value) {
-          const startLocal = t.UTCToLocal(dtstart).getTime()
-          const gap = start.getTime() - startLocal
-          if (gap > weekStride) {
-            const cycles = Math.floor(gap / weekStride) - 2
-            if (cycles > 0)
-              value = new Date(dtstart.getTime() + cycles * weekStride)
-          }
-        }
-
-        let x = get()
-
-        if (start) {
-          while (x.value && x.value.getTime() < start.getTime()) {
-            x = done || (
-              count && rest-- === 0
-                ? (done = { done: true })
-                : get()
-            )
-          }
-        }
-
-        return x
+        return lt === null
+          ? (done = { done: true })
+          : { done: false, value: lt }
       }
 
-      function get() {
-        value = value ? freq ? freq(value) : 0 : dtstart
-        if (!value || (until && value.getTime() >= until))
-          return (done = { done: true })
+      function seek() {
+        seeked = true
 
-        return exdate && exdate.indexOf(value.getTime()) !== -1
-          ? get()
-          : { done: false, value: t.UTCToLocal(value) }
+        const startTime = start.getTime()
+
+        if (stride || weekStride) {
+          const s = stride || weekStride
+          const gap = startTime - (dtstartTime + offset(dtstartTime))
+          if (gap > s) {
+            const jumps = Math.floor(gap / s) - 2
+            if (jumps > 0)
+              value = dtstartTime + jumps * s
+          }
+        } else if (monthSeek) {
+          const months = (start.getFullYear() - y0) * 12 + start.getMonth() - m0
+          const cycles = Math.floor(months / interval) - 2
+          if (cycles > 0)
+            value = monthOcc(y0, m0 + cycles * interval)
+        } else if (yearSeek) {
+          const cycles = Math.floor((start.getFullYear() - y0) / interval) - 2
+          if (cycles > 0)
+            value = monthOcc(y0 + cycles * interval, m0)
+        }
+
+        let lt = advance()
+        while (lt !== null && lt < startTime) {
+          if (count && rest-- === 0)
+            return null
+          lt = advance()
+        }
+        return lt
+      }
+
+      function advance() {
+        if (empty)
+          return null
+
+        while (true) {
+          value = value === null
+            ? initial()
+            : freq
+              ? freq(value)
+              : null
+
+          if (value === null || (until && value > until))
+            return null
+
+          if (bydays && !bydays[dow(value)])
+            continue
+
+          if (exdate && exdate.has(value))
+            continue
+
+          return value + offset(value)
+        }
+      }
+
+      function initial() {
+        return weekly && days.indexOf(dayMap[dow(dtstartTime)]) === -1
+          ? WEEKLY(dtstartTime)
+          : dtstartTime
       }
     }
 
     function secondly(ms) {
-      return function(date) {
-        return new Date(date.getTime() + ms * interval)
-      }
+      const step = ms * interval
+      return v => v + step
     }
 
-    function WEEKLY(date) {
-      const day = dayMap[date.getUTCDay()]
+    function WEEKLY(v) {
+      const day = dayMap[dow(v)]
 
-      date = new Date(date.getTime() + (
+      return v + (
         nextDay[day] ||
         -day * t.d + t.w * interval + firstDay
-      ))
-
-      return date
+      )
     }
 
-    function MONTHLY(date) {
-      const y = date.getUTCFullYear()
-      const m = date.getUTCMonth()
-      const d = date.getUTCDate()
-      const h = date.getUTCHours()
-      const mm = date.getUTCMinutes()
-      const s = date.getUTCSeconds()
-      const ms = date.getUTCMilliseconds()
-      const daysInNextMonth = new Date(Date.UTC(y, m + 2, 0)).getUTCDate()
-      return new Date(Date.UTC(y, m + interval, Math.min(dtstart.getUTCDate(), daysInNextMonth), h, mm, s, ms))
+    function MONTHLY(v) {
+      scratch.setTime(v)
+      return monthOcc(scratch.getUTCFullYear(), scratch.getUTCMonth() + interval)
+    }
+
+    function YEARLY(v) {
+      scratch.setTime(v)
+      return monthOcc(scratch.getUTCFullYear() + interval, m0)
     }
   }
 }
