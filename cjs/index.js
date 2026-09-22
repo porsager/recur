@@ -55,8 +55,9 @@ module.exports = Recur;function Recur(input) {
 
   let iter
     , dur
-
-  const invalidate = () => iter = dur = undefined
+    , containsFrom = 0
+    , containsTo = 0
+    , containsAnswer = false
 
   const recur = {
     get dtstart() { return x.dtstart },
@@ -168,6 +169,12 @@ module.exports = Recur;function Recur(input) {
 
   return recur
 
+  function invalidate() {
+    iter = dur = undefined
+    containsFrom = containsTo = 0
+    containsAnswer = false
+  }
+
   function duration() {
     return dur !== undefined ? dur : (dur =
       recur.duration
@@ -182,16 +189,23 @@ module.exports = Recur;function Recur(input) {
   }
 
   function contains(date) {
-    const d = duration()
-    const dt = ms(date)
-    const i = iterator(dt - d)
+    const time = ms(date)
+    if (time >= containsFrom && time < containsTo)
+      return containsAnswer
 
-    for (const x of i) {
-      if (x > dt)
-        break
-      if (!d || dt < x + d)
+    const d = duration()
+    for (const x of iterator(time - d)) {
+      if (x > time) {
+        containsFrom = time, containsTo = x, containsAnswer = false
+        return false
+      }
+      if (!d || time < x + d) {
+        d && (containsFrom = x, containsTo = x + d, containsAnswer = true)
         return true
+      }
     }
+
+    containsFrom = time, containsTo = Infinity, containsAnswer = false
     return false
   }
 
