@@ -9,8 +9,14 @@
     "node": ">= 5.0"
   },
   "exports": {
-    "import": "./src/index.js",
-    "default": "./cjs/index.js"
+    "import": {
+      "types": "./types/index.d.ts",
+      "default": "./src/index.js"
+    },
+    "default": {
+      "types": "./types/index.d.cts",
+      "default": "./cjs/index.js"
+    }
   },
   "repository": "porsager/recur",
   "scripts": {
@@ -20,8 +26,10 @@
   },
   "files": [
     "src",
-    "cjs"
+    "cjs",
+    "types"
   ],
   "author": "Rasmus Porsager <rasmus@porsager.com>",
-  "license": "WTFPL"
+  "license": "WTFPL",
+  "types": "./types/index.d.ts"
 }
